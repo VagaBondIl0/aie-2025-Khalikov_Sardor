@@ -61,13 +61,69 @@ def overview(
 
 
 @app.command()
+def head(
+    path: str = typer.Argument(..., help="Путь к CSV-файлу."),
+    n: int = typer.Option(5, help="Количество строк для вывода."),
+    sep: str = typer.Option(",", help="Разделитель в CSV."),
+    encoding: str = typer.Option("utf-8", help="Кодировка файла."),
+) -> None:
+    """
+    Вывести первые N строк из CSV-файла.
+    
+    Аналог команды head в Unix или df.head() в pandas.
+    Полезно для быстрого просмотра структуры данных.
+    """
+    df = _load_csv(Path(path), sep=sep, encoding=encoding)
+    
+    if n <= 0:
+        typer.echo("Параметр --n должен быть положительным числом", err=True)
+        raise typer.Exit(1)
+    
+    head_df = df.head(n)
+    
+    typer.echo(f"Первые {min(n, len(df))} строк из {len(df)} (всего столбцов: {len(df.columns)}):\n")
+    typer.echo(head_df.to_string(index=True))
+
+
+@app.command()
+def sample(
+    path: str = typer.Argument(..., help="Путь к CSV-файлу."),
+    n: int = typer.Option(10, help="Количество строк для случайной выборки."),
+    sep: str = typer.Option(",", help="Разделитель в CSV."),
+    encoding: str = typer.Option("utf-8", help="Кодировка файла."),
+    seed: int = typer.Option(42, help="Seed для воспроизводимости случайной выборки."),
+) -> None:
+    """
+    Вывести случайную выборку из N строк CSV-файла.
+    
+    Полезно для быстрого ознакомления с данными или проверки
+    разнообразия значений в датасете.
+    """
+    df = _load_csv(Path(path), sep=sep, encoding=encoding)
+    
+    if n <= 0:
+        typer.echo("Параметр --n должен быть положительным числом", err=True)
+        raise typer.Exit(1)
+    
+    if n > len(df):
+        typer.echo(f"Запрошено {n} строк, но в файле всего {len(df)}. Выведены все строки.", err=True)
+        sample_df = df
+    else:
+        sample_df = df.sample(n=n, random_state=seed)
+    
+    typer.echo(f"Случайная выборка из {min(n, len(df))} строк (всего в файле: {len(df)}, столбцов: {len(df.columns)}):\n")
+    typer.echo(sample_df.to_string(index=True))
+
+
+@app.command()
 def report(
     path: str = typer.Argument(..., help="Путь к CSV-файлу."),
     out_dir: str = typer.Option("reports", help="Каталог для отчёта."),
     sep: str = typer.Option(",", help="Разделитель в CSV."),
     encoding: str = typer.Option("utf-8", help="Кодировка файла."),
-    max_hist_columns: int = typer.Option(6, "--max-hist-columns", help="Макс. число числовых колонок для гистограмм"),
-    top_k_categories: int = typer.Option(5, "--top-k-categories", help="Кол-во топ-категорий для вывода"),
+    max_hist_columns: int = typer.Option(6, help="Максимум числовых колонок для гистограмм."),
+    top_k_categories: int = typer.Option(5, help="Сколько top-значений выводить для категориальных колонок."),
+    title: str = typer.Option("EDA-отчёт", help="Заголовок отчёта (Markdown).")
 ) -> None:
     """
     Сгенерировать полный EDA-отчёт:
@@ -82,17 +138,18 @@ def report(
 
     df = _load_csv(Path(path), sep=sep, encoding=encoding)
 
-    # 1 Обзор
+    # 1. Обзор
     summary = summarize_dataset(df)
     summary_df = flatten_summary_for_print(summary)
     missing_df = missing_table(df)
     corr_df = correlation_matrix(df)
-    top_cats = top_categories(df, max_columns=10, top_k=top_k_categories)  # ← используем top_k
+    # ИСПРАВЛЕНО: передаем top_k_categories в функцию
+    top_cats = top_categories(df, top_k=top_k_categories)
 
-    # 2 Качество в целом
-    quality_flags = compute_quality_flags(df)
+    # 2. Качество в целом
+    quality_flags = compute_quality_flags(summary, missing_df, df)
 
-    # 3 Сохраняем табличные артефакты
+    # 3. Сохраняем табличные артефакты
     summary_df.to_csv(out_root / "summary.csv", index=False)
     if not missing_df.empty:
         missing_df.to_csv(out_root / "missing.csv", index=True)
@@ -100,12 +157,18 @@ def report(
         corr_df.to_csv(out_root / "correlation.csv", index=True)
     save_top_categories_tables(top_cats, out_root / "top_categories")
 
-    # 4 Markdown - отчёт
+    # 4. Markdown-отчёт
     md_path = out_root / "report.md"
     with md_path.open("w", encoding="utf-8") as f:
-        f.write(f"# EDA-отчёт\n\n")
+        # ИСПРАВЛЕНО: используем параметр title вместо жестко заданного текста
+        f.write(f"# {title}\n\n")
         f.write(f"Исходный файл: `{Path(path).name}`\n\n")
         f.write(f"Строк: **{summary.n_rows}**, столбцов: **{summary.n_cols}**\n\n")
+
+        # ДОБАВЛЕНО: информация о параметрах генерации отчета
+        f.write("## Параметры отчёта\n\n")
+        f.write(f"- Максимум гистограмм: **{max_hist_columns}**\n")
+        f.write(f"- Top-K категорий: **{top_k_categories}**\n\n")
 
         f.write("## Качество данных (эвристики)\n\n")
         f.write(f"- Оценка качества: **{quality_flags['quality_score']:.2f}**\n")
@@ -113,16 +176,9 @@ def report(
         f.write(f"- Слишком мало строк: **{quality_flags['too_few_rows']}**\n")
         f.write(f"- Слишком много колонок: **{quality_flags['too_many_columns']}**\n")
         f.write(f"- Слишком много пропусков: **{quality_flags['too_many_missing']}**\n")
+        # ДОБАВЛЕНО: вывод новых эвристик
         f.write(f"- Есть константные колонки: **{quality_flags['has_constant_columns']}**\n")
-        if quality_flags['has_constant_columns']:
-            f.write(f"  - Константные колонки: {quality_flags['constant_columns']}\n")
-        f.write(f"- Подозрительные дубликаты ID: **{quality_flags['has_suspicious_id_duplicates']}**\n")
-        if quality_flags['has_suspicious_id_duplicates']:
-            f.write(f"  - Число дубликатов: {quality_flags['id_duplicate_count']}\n")
-
-        f.write("\n## Параметры отчёта\n\n")
-        f.write(f"- Макс. колонок для гистограмм: **{max_hist_columns}**\n")
-        f.write(f"- Топ категорий: **{top_k_categories}**\n\n")
+        f.write(f"- Много нулевых значений: **{quality_flags['has_many_zero_values']}**\n\n")
 
         f.write("## Колонки\n\n")
         f.write("См. файл `summary.csv`.\n\n")
@@ -143,13 +199,17 @@ def report(
         if not top_cats:
             f.write("Категориальные/строковые признаки не найдены.\n\n")
         else:
+            # ДОБАВЛЕНО: упоминание о параметре top_k
+            f.write(f"Показаны top-{top_k_categories} значений для каждого признака.\n")
             f.write("См. файлы в папке `top_categories/`.\n\n")
 
         f.write("## Гистограммы числовых колонок\n\n")
+        f.write(f"Построено до {max_hist_columns} гистограмм.\n")
         f.write("См. файлы `hist_*.png`.\n")
 
-    # 5 Картинки
-    plot_histograms_per_column(df, out_root, max_columns=max_hist_columns)  # ← используем max_hist_columns
+    # 5. Картинки
+    # ИСПРАВЛЕНО: передаем max_hist_columns в функцию
+    plot_histograms_per_column(df, out_root, max_columns=max_hist_columns)
     plot_missing_matrix(df, out_root / "missing_matrix.png")
     plot_correlation_heatmap(df, out_root / "correlation_heatmap.png")
 

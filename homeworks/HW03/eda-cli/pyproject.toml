@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 77.0.3", "setuptools-scm"]
+requires = ["setuptools >= 77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -17,7 +17,3 @@ dependencies = [
 
 [project.scripts]
 eda-cli = "eda_cli.cli:app"
-
-[tool.setuptools.packages.find]
-where = ["src"]
-namespaces = false  

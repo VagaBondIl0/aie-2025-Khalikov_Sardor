@@ -24,7 +24,7 @@ uv sync
 
 ## Запуск CLI
 
-### Краткий обзор
+### 1. Краткий обзор (overview)
 
 ```bash
 uv run eda-cli overview data/example.csv
@@ -35,10 +35,68 @@ uv run eda-cli overview data/example.csv
 - `--sep` – разделитель (по умолчанию `,`);
 - `--encoding` – кодировка (по умолчанию `utf-8`).
 
-### Полный EDA-отчёт
+### 2. Первые N строк (head)
+
+```bash
+uv run eda-cli head data/example.csv --n 10
+```
+
+Выводит первые N строк из CSV-файла (аналог `df.head()` в pandas).
+
+Параметры:
+
+- `--n` – количество строк для вывода (по умолчанию `5`);
+- `--sep` – разделитель (по умолчанию `,`);
+- `--encoding` – кодировка (по умолчанию `utf-8`).
+
+### 3. Случайная выборка (sample)
+
+```bash
+uv run eda-cli sample data/example.csv --n 10 --seed 42
+```
+
+Выводит случайную выборку из N строк (аналог `df.sample()` в pandas).
+
+Параметры:
+
+- `--n` – количество строк для выборки (по умолчанию `10`);
+- `--seed` – seed для воспроизводимости (по умолчанию `42`);
+- `--sep` – разделитель (по умолчанию `,`);
+- `--encoding` – кодировка (по умолчанию `utf-8`).
+
+### 4. Полный EDA-отчёт (report)
 
 ```bash
 uv run eda-cli report data/example.csv --out-dir reports
+```
+
+**Новые параметры (добавлены в HW03):**
+
+- `--title` – заголовок отчёта в Markdown (по умолчанию `"EDA-отчёт"`);
+- `--max-hist-columns` – максимальное количество числовых колонок для построения гистограмм (по умолчанию `6`);
+- `--top-k-categories` – количество top-значений для категориальных признаков (по умолчанию `5`).
+
+**Как влияют новые параметры:**
+
+- `--title`: изменяет заголовок первого уровня в файле `report.md`
+- `--max-hist-columns`: ограничивает количество создаваемых PNG-файлов с гистограммами
+- `--top-k-categories`: определяет, сколько самых частых значений будет показано для каждого категориального признака
+
+**Примеры использования с новыми опциями:**
+
+```bash
+# С пользовательским заголовком
+uv run eda-cli report data/example.csv --out-dir reports --title "Анализ данных 2024"
+
+# Ограничение визуализаций
+uv run eda-cli report data/example.csv --out-dir reports --max-hist-columns 3 --top-k-categories 10
+
+# Полная кастомизация
+uv run eda-cli report data/example.csv \
+  --out-dir my_reports \
+  --title "Мой отчёт" \
+  --max-hist-columns 8 \
+  --top-k-categories 7
 ```
 
 В результате в каталоге `reports/` появятся:
@@ -51,6 +109,41 @@ uv run eda-cli report data/example.csv --out-dir reports
 - `hist_*.png` – гистограммы числовых колонок;
 - `missing_matrix.png` – визуализация пропусков;
 - `correlation_heatmap.png` – тепловая карта корреляций.
+
+## Новые эвристики качества данных (HW03)
+
+Добавлены следующие проверки:
+
+1. **`has_constant_columns`** – обнаружение колонок с единственным уникальным значением
+2. **`has_many_zero_values`** – выявление числовых колонок, где доля нулей превышает 90%
+
+Эти флаги отображаются в разделе "Качество данных" файла `report.md`.
+
+## Дополнительные команды (HW03)
+
+### Быстрый просмотр данных
+
+**Первые 5 строк:**
+```bash
+uv run eda-cli head data/example.csv
+```
+
+**Первые 20 строк:**
+```bash
+uv run eda-cli head data/example.csv --n 20
+```
+
+**Случайная выборка из 15 строк:**
+```bash
+uv run eda-cli sample data/example.csv --n 15
+```
+
+**Случайная выборка с фиксированным seed:**
+```bash
+uv run eda-cli sample data/example.csv --n 10 --seed 123
+```
+
+Эти команды полезны для быстрого ознакомления с данными без генерации полного отчёта.
 
 ## Тесты
 

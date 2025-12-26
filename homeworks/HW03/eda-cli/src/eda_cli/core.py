@@ -40,61 +40,6 @@ class DatasetSummary:
         }
 
 
-def _is_constant_series(s):
-    """Проверяет, все ли непустые значения в серии одинаковые."""
-    unique_vals = s.dropna().unique()
-    return len(unique_vals) <= 1
-
-
-def compute_quality_flags(df: pd.DataFrame, id_col: str = 'user_id') -> Dict[str, Any]:
-    """
-    Расширенные эвристики качества данных:
-    - проверка дубликатов в id_col,
-    - константные колонки,
-    - пропуски, размеры датасета и quality_score.
-    """
-    n_rows, n_cols = df.shape
-
-    #Старые флаги(для совместимости с отчётом)
-    flags = {}
-    flags["too_few_rows"] = n_rows < 100
-    flags["too_many_columns"] = n_cols > 100
-
-    max_missing_share = float(df.isna().mean().max()) if n_rows > 0 else 0.0
-    flags["max_missing_share"] = max_missing_share
-    flags["too_many_missing"] = max_missing_share > 0.5
-
-    # Новые эвристики 
-    # Constant columns
-    constant_cols = [col for col in df.columns if _is_constant_series(df[col])]
-    flags['has_constant_columns'] = len(constant_cols) > 0
-    flags['constant_columns'] = constant_cols
-
-    # ID duplicates
-    if id_col in df.columns:
-        dup_count = df.duplicated(subset=[id_col]).sum()
-        flags['has_suspicious_id_duplicates'] = dup_count > 0
-        flags['id_duplicate_count'] = int(dup_count)
-    else:
-        flags['has_suspicious_id_duplicates'] = False
-        flags['id_duplicate_count'] = 0
-
-    #Quality score (интегральный)
-    score = 1.0
-    score -= max_missing_share  #штраф за пропуски
-    if n_rows < 100:
-        score -= 0.2
-    if n_cols > 100:
-        score -= 0.1
-    if flags['has_constant_columns']:
-        score -= 0.2
-    if flags['has_suspicious_id_duplicates']:
-        score -= 0.3
-
-    flags["quality_score"] = max(0.0, min(1.0, score))
-    return flags
-
-
 def summarize_dataset(
     df: pd.DataFrame,
     example_values_per_column: int = 3,
@@ -120,7 +65,7 @@ def summarize_dataset(
         missing_share = float(missing / n_rows) if n_rows > 0 else 0.0
         unique = int(s.nunique(dropna=True))
 
-        #Примерные значения выводим как строки
+        # Примерные значения выводим как строки
         examples = (
             s.dropna().astype(str).unique()[:example_values_per_column].tolist()
             if non_null > 0
@@ -223,6 +168,66 @@ def top_categories(
         result[name] = table
 
     return result
+
+
+def compute_quality_flags(summary: DatasetSummary, missing_df: pd.DataFrame, df: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Простейшие эвристики «качества» данных:
+    - слишком много пропусков;
+    - подозрительно мало строк;
+    и т.п.
+    """
+    flags: Dict[str, Any] = {}
+    
+    flags["too_few_rows"] = summary.n_rows < 100
+    flags["too_many_columns"] = summary.n_cols > 100
+
+    max_missing_share = float(missing_df["missing_share"].max()) if not missing_df.empty else 0.0
+    flags["max_missing_share"] = max_missing_share
+    flags["too_many_missing"] = max_missing_share > 0.5
+
+    # мои эвристики (!)
+    # проверка на одинаковые столбцы (1)
+    check_col = [col for col in df.columns if df[col].nunique() <= 1]
+    flags['has_constant_columns'] = len(check_col) > 0
+
+    # проверка на долю нулей (2)
+    # эвристика: много нулей (>90%) в числовой колонке
+    flags["has_many_zero_values"] = False
+    num_cols = df.select_dtypes(include=["number"]).columns
+
+    for col in num_cols:
+        s = df[col]
+        total = len(s)
+        if total == 0:
+            continue
+
+        # Считаем долю нулей ОТ ОБЩЕГО ЧИСЛА СТРОК (включая NaN)
+        zero_count = (s == 0).sum()
+        zero_share = zero_count / total
+
+        # Пропускаем бинарные колонки ТОЛЬКО если они сбалансированы (не >90% нулей)
+        if zero_share > 0.9:
+            flags["has_many_zero_values"] = True
+            break  # достаточно одного столбца
+
+    
+    # Простейший «скор» качества
+    score = 1.0
+    score -= max_missing_share
+    if summary.n_rows < 100:
+        score -= 0.2
+    if summary.n_cols > 100:
+        score -= 0.1
+    if flags["has_constant_columns"]:
+        score -= 0.15
+    if flags["has_many_zero_values"]:
+        score -= 0.1
+
+    score = max(0.0, min(1.0, score))
+    flags["quality_score"] = score
+
+    return flags
 
 
 def flatten_summary_for_print(summary: DatasetSummary) -> pd.DataFrame:
