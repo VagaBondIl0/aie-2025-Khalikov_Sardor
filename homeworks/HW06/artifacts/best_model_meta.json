@@ -1,0 +1,9 @@
+{
+  "model": "GradientBoosting",
+  "metrics": {
+    "accuracy": 0.934,
+    "f1": 0.8943436499466382,
+    "roc_auc": 0.9714763089736428
+  },
+  "random_state": 42
+}
