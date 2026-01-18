@@ -1,0 +1,47 @@
+[
+  {
+    "dataset": "01",
+    "KMeans": {
+      "model": "KMeans",
+      "silhouette": 0.4723,
+      "ch": 9446.8758,
+      "db": 0.7983
+    },
+    "DBSCAN": {
+      "model": "DBSCAN",
+      "silhouette": -0.0027,
+      "ch": 1006.5266,
+      "db": 1.5366
+    }
+  },
+  {
+    "dataset": "02",
+    "KMeans": {
+      "model": "KMeans",
+      "silhouette": 0.2309,
+      "ch": 2411.0079,
+      "db": 1.678
+    },
+    "DBSCAN": {
+      "model": "DBSCAN",
+      "silhouette": 0.0894,
+      "ch": 59.7326,
+      "db": 1.4856
+    }
+  },
+  {
+    "dataset": "03",
+    "KMeans": {
+      "model": "KMeans",
+      "silhouette": 0.3485,
+      "ch": 9019.6994,
+      "db": 1.2017
+    },
+    "DBSCAN": {
+      "model": "DBSCAN",
+      "silhouette": 0.0236,
+      "ch": 1254.6743,
+      "db": 1.6442
+    }
+  }
+]

@@ -1,0 +1,29 @@
+{
+  "ds01": {
+    "KMeans": {
+      "n_clusters": 2
+    },
+    "DBSCAN": {
+      "eps": 0.6,
+      "min_samples": 5
+    }
+  },
+  "ds02": {
+    "KMeans": {
+      "n_clusters": 2
+    },
+    "DBSCAN": {
+      "eps": 0.6,
+      "min_samples": 5
+    }
+  },
+  "ds03": {
+    "KMeans": {
+      "n_clusters": 2
+    },
+    "DBSCAN": {
+      "eps": 0.4,
+      "min_samples": 5
+    }
+  }
+}
