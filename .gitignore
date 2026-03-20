@@ -57,3 +57,5 @@ logs/
 *.old
 anaconda_projects/
 homeworks/HW08-09/data/
+homeworks/HW08-09/data/
+*.pt
