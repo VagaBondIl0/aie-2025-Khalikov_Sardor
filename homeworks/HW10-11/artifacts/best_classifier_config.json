@@ -3,25 +3,10 @@
   "dataset": "STL10",
   "num_classes": 10,
   "architecture": "ResNet18-finetune",
-  "pretrained": "ImageNet (ResNet18_Weights.IMAGENET1K_V1)",
-  "unfrozen_layers": [
-    "layer4",
-    "fc"
-  ],
-  "frozen_layers": [
-    "conv1",
-    "bn1",
-    "layer1",
-    "layer2",
-    "layer3"
-  ],
-  "augmentation": "RandomHorizontalFlip, RandomCrop(224,pad=28), ColorJitter",
+  "augmentation": "aug",
   "optimizer": "AdamW",
   "lr": 0.0005,
-  "weight_decay": 0.0001,
-  "scheduler": "CosineAnnealingLR(T_max=20)",
   "epochs": 20,
-  "batch_size": 64,
   "seed": 42,
   "input_size": 224,
   "normalize_mean": [
@@ -34,9 +19,8 @@
     0.224,
     0.225
   ],
-  "val_split": "20% of train (1000 samples, seed=42)",
-  "best_val_accuracy": 0.812,
-  "test_accuracy": 0.796,
-  "loss": "CrossEntropyLoss",
-  "selection_criterion": "best_val_accuracy"
+  "val_split": "20% of train (seed=42)",
+  "best_val_accuracy": 0.951,
+  "test_accuracy": 0.948875,
+  "note": "Test evaluated once, only for best model selected by val_accuracy"
 }
