@@ -58,7 +58,6 @@ logs/
 anaconda_projects/
 homeworks/HW08-09/data/
 homeworks/HW08-09/data/
-*.pt
 
 homeworks/HW10-11/data/ 
 homeworks/HW12/data/
