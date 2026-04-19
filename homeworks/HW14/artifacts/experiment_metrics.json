@@ -1,0 +1,10 @@
+{
+  "chunk_small": {
+    "hit@k": 0.3,
+    "recall@k": 0.3
+  },
+  "chunk_large": {
+    "hit@k": 0.2,
+    "recall@k": 0.2
+  }
+}

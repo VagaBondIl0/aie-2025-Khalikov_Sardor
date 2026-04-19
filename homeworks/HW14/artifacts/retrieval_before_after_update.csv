@@ -1,6 +1,4 @@
-query,before_retrieved_sources,after_retrieved_sources,changed
-Что такое IP-адрес и зачем он нужен?,"net_01, net_02, net_03","net_03, net_02, net_01",True
-Как работает NAT и зачем он используется?,"net_03, net_02, net_13","net_01, net_02, net_20",True
-Что делает VPN и как он защищает пользователя?,"net_05, net_12, net_16","net_09, net_23, net_05",True
-Какие методы используются для маскировки VPN-трафика?,"net_11, net_19, net_12","net_05, net_16, net_21",True
-Какой VPN-протокол выбрать для максимальной скорости?,"net_21, net_10, net_05","net_11, net_18, net_08",True
+﻿query,before_retrieved_sources,after_retrieved_sources,changed
+Как управлять сетями в docker-compose?,"['Docker Compose', 'Ограничение ресурсов', 'Основные команды Docker']","['Команды управления стеком', 'Docker Compose', 'Ограничение ресурсов']",True
+Как удалить контейнеры и тома одной командой?,"['Dockerfile', 'Жизненный цикл контейнера', 'Сети в Docker']","['Dockerfile', 'Жизненный цикл контейнера', 'Сети в Docker']",False
+Как подключить внешний volume к сервису?,"['Тома (Volumes)', 'Ограничение ресурсов', 'Безопасность контейнеров']","['Docker Compose volumes', 'Тома (Volumes)', 'Ограничение ресурсов']",True
