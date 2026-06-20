@@ -1,0 +1,7 @@
+# Параметры инференса сервиса прогноза оттока клиентов
+
+decision_threshold: 0.5
+
+risk_categories:
+  low_max: 0.3      # probability < low_max -> "low"
+  high_min: 0.7      # probability > high_min -> "high"; иначе "medium"

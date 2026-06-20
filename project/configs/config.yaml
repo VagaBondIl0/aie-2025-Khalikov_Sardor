@@ -1,0 +1,10 @@
+# Общие настройки проекта Churn Prediction Service
+
+data:
+  url_primary: "https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv"
+  url_fallback: "https://raw.githubusercontent.com/dsrscientist/dataset1/master/telecom_churn.csv"
+  target_column: "Churn"
+
+paths:
+  model_path: "artifacts/model.pkl"
+  log_dir: "logs"

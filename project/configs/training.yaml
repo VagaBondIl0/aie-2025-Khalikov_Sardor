@@ -1,0 +1,17 @@
+# Параметры обучения финальной модели (LightGBM).
+# Значения подобраны через Optuna (50 trials, метрика ROC-AUC) — см. notebooks/02_modeling.ipynb
+
+random_state: 42
+test_size: 0.2
+
+lgbm_params:
+  num_leaves: 52
+  learning_rate: 0.05
+  n_estimators: 300
+  min_child_samples: 40
+  subsample: 0.85
+
+optuna:
+  n_trials: 50
+  direction: maximize
+  metric: roc_auc
